@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tra cứu quán ăn</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 16px; }
+    .filters { display: flex; gap: 8px; margin-bottom: 12px; }
+    input, select, button { padding: 8px; font-size: 14px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+    .title { font-weight: 600; }
+    .muted { color: #666; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <h3>Tra cứu</h3>
+  <div class="filters">
+    <input id="keyword" placeholder="Món / Quán" />
+    <select id="quan">
+      <option value="all">Tất cả quận</option>
+    </select>
+    <button onclick="applyFilter()">Tìm</button>
+  </div>
+
+  <div id="result"></div>
+
+<script>
+const SHEET_ID = "1ivMXPsM441iaexkwZPteYmENsuQgZQ8sJLYjNRfzNFI";
+const SHEET_NAME = "FoodEverywhere";
+const DATA_URL = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+
+let allData = [];
+
+fetch(DATA_URL)
+  .then(res => res.json())
+  .then(data => {
+    allData = data;
+    initQuanDropdown(data);
+    render(data);
+  })
+  .catch(err => {
+    document.getElementById("result").innerText = "Không tải được dữ liệu";
+    console.error(err);
+  });
+
+function initQuanDropdown(data) {
+  const quanSet = new Set();
+  data.forEach(r => r["Quận"] && quanSet.add(r["Quận"]));
+  const select = document.getElementById("quan");
+  [...quanSet].sort().forEach(q => {
+    const opt = document.createElement("option");
+    opt.value = q;
+    opt.textContent = "Quận " + q;
+    select.appendChild(opt);
+  });
+}
+
+function applyFilter() {
+  const kw = document.getElementById("keyword").value.toLowerCase();
+  const q = document.getElementById("quan").value;
+
+  const filtered = allData.filter(r => {
+    const matchKw =
+      !kw ||
+      (r["Món - Quán"] || "").toLowerCase().includes(kw);
+
+    const matchQuan =
+      q === "all" || r["Quận"] === q;
+
+    return matchKw && matchQuan;
+  });
+
+  render(filtered);
+}
+
+function render(list) {
+  const box = document.getElementById("result");
+  box.innerHTML = "";
+  if (list.length === 0) {
+    box.innerHTML = "<p>Không có kết quả</p>";
+    return;
+  }
+  list.forEach(r => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <div class="title">${r["Món - Quán"] || ""}</div>
+      <div class="muted">Quận: ${r["Quận"] || ""}</div>
+      <div>${r["Địa Chỉ"] || ""}</div>
+      <div class="muted">Thời gian: ${r["Thời gian"] || ""}</div>
+      <div class="muted">Giá: ${r["Giá"] || ""}</div>
+    `;
+    box.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>
