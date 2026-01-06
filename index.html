@@ -38,7 +38,6 @@ fetch(DATA_URL)
   .then(data => {
     allData = data;
     initQuanDropdown(data);
-    render(data);
   })
   .catch(err => {
     document.getElementById("result").innerText = "Không tải được dữ liệu";
